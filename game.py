@@ -1,6 +1,9 @@
 import curses
 import asyncio
 import time
+import logging
+import random
+logging.basicConfig(filename="sample.log", level=logging.INFO)
 
 TIC_TIMEOUT = 0.1
 
@@ -8,28 +11,28 @@ TIC_TIMEOUT = 0.1
 async def blink(canvas, row, column, symbol='*'):
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
-        for _ in range(int(2*10)):
+        for _ in range(random.randint(0, 20)):
             await asyncio.sleep(0)
 
         canvas.addstr(row, column, symbol)
-        for _ in range(int(0.3*10)):
+        for _ in range(random.randint(0, 3)):
             await asyncio.sleep(0)
 
         canvas.addstr(row, column, symbol, curses.A_BOLD)
-        for _ in range(int(0.5*10)):
+        for _ in range(random.randint(0, 5)):
             await asyncio.sleep(0)
 
         canvas.addstr(row, column, symbol)
-        for _ in range(int(0.3*10)):
+        for _ in range(random.randint(0, 3)):
             await asyncio.sleep(0)
 
 
 def draw(canvas):
-    canvas.border()
     curses.curs_set(False)
-    coroutines = []
-    for i in range(5):
-        coroutines.append(blink(canvas, 5, 20+(i*2)))
+    canvas.nodelay(True)
+
+    height, width = canvas.getmaxyx()
+    coroutines = [blink(canvas, x, y, symbol) for x, y, symbol in generate_stars(height, width)]
     while True:
         for coroutine in coroutines:
             canvas.refresh()
@@ -37,19 +40,14 @@ def draw(canvas):
         time.sleep(TIC_TIMEOUT)
 
 
-    #  while True:
-    #     canvas.addstr(row,colum,"*",curses.A_DIM)
-    #     time.sleep(2)
-    #     canvas.refresh()
-    #     canvas.addstr(row,colum,"*")
-    #     time.sleep(0.3)
-    #     canvas.refresh()
-    #     canvas.addstr(row,colum,"*",curses.A_BOLD)
-    #     time.sleep(0.5)
-    #     canvas.refresh()
-    #     canvas.addstr(row,colum,"*")
-    #     time.sleep(0.3)
-    #     canvas.refresh()
+def generate_stars(height: int, width: int, count_stars=100):
+    for star in range(count_stars):
+        x_cordinates = random.randint(0, height-1)
+        y_cordinates = random.randint(0, width-1)
+        symbol = random.choice(["+", "*", ".", ":"])
+        yield x_cordinates, y_cordinates, symbol
+
+
 if __name__ == '__main__':
     curses.update_lines_cols()
     curses.wrapper(draw)
