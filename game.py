@@ -1,4 +1,3 @@
-from asyncio.log import logger
 import curses
 import asyncio
 import time
@@ -7,7 +6,7 @@ import random
 
 from itertools import cycle
 
-from curses_tools import draw_frame
+from curses_tools import draw_frame, read_controls, get_frame_size
 
 logging.basicConfig(filename="sample.log", level=logging.INFO)
 
@@ -64,11 +63,23 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.6, columns_speed=0
         column += columns_speed
 
 
-async def animate_spaceship(canvas, start_row, start_column, animation_spaceship):
+async def animate_spaceship(canvas, animation_spaceship, height, width, row, column):
     for frame in cycle(animation_spaceship):
-        draw_frame(canvas, start_row, start_column, frame)
+        row_frame, column_frame = get_frame_size(frame)
+        rows_direction, columns_direction, space_pressed = read_controls(canvas)
+
+        if rows_direction == -1 and height-row < height:
+            row += rows_direction
+        if rows_direction == 1 and row+row_frame < height:
+            row += rows_direction
+        if columns_direction == -1 and width - column < width:
+            column += columns_direction
+        if columns_direction == 1 and column_frame + column < width:
+            column += columns_direction
+
+        draw_frame(canvas, row, column, frame)
         await count_delay(0.3)
-        draw_frame(canvas, start_row, start_column, frame, negative=True)
+        draw_frame(canvas, row, column, frame, negative=True)
 
 
 def draw(canvas):
@@ -77,12 +88,23 @@ def draw(canvas):
 
     height, width = canvas.getmaxyx()
 
-    with open('animations\\rocket_frame_1.txt', 'r') as frame_1, open('animations\\rocket_frame_2.txt', 'r') as frame_2:
+    with open('animations\\rocket_frame_1.txt', 'r') as frame_1,\
+         open('animations\\rocket_frame_2.txt', 'r') as frame_2:
         animation_spaceship = [frame_1.read(), frame_2.read()]
 
-    coroutines = [blink(canvas, x, y, symbol) for x, y, symbol in generate_stars(height, width)]
+    coroutines = [blink(canvas, x, y, symbol)
+                  for x, y, symbol in generate_stars(height, width)]
     coroutines.append(fire(canvas, height/2, width/2))
-    coroutines.append(animate_spaceship(canvas, height/2, width/2-2, animation_spaceship))
+    coroutines.append(
+        animate_spaceship(
+            canvas,
+            animation_spaceship,
+            height,
+            width,
+            row=height/2,
+            column=width/2-2
+            )
+        )
 
     while True:
         for coroutine in coroutines.copy():
