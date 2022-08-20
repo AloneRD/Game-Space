@@ -19,19 +19,24 @@ async def sleep_task(seconds):
         await asyncio.sleep(0)
 
 
-async def blink(canvas, row, column, symbol='*'):
+async def blink(canvas, row, column, symbol, flash_offset):
     while True:
-        canvas.addstr(row, column, symbol, curses.A_DIM)
-        await sleep_task(2)
-
-        canvas.addstr(row, column, symbol)
-        await sleep_task(0.3)
-
-        canvas.addstr(row, column, symbol, curses.A_BOLD)
-        await sleep_task(0.5)
-
-        canvas.addstr(row, column, symbol)
-        await sleep_task(0.3)
+        if flash_offset == 0:
+            canvas.addstr(row, column, symbol, curses.A_DIM)
+            await sleep_task(2)
+            flash_offset += 1
+        if flash_offset == 1:
+            canvas.addstr(row, column, symbol)
+            await sleep_task(0.3)
+            flash_offset += 1
+        if flash_offset == 2:
+            canvas.addstr(row, column, symbol, curses.A_BOLD)
+            await sleep_task(0.5)
+            flash_offset += 1
+        if flash_offset == 3:
+            canvas.addstr(row, column, symbol)
+            await sleep_task(0.3)
+            flash_offset == 0
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.6, columns_speed=0):
@@ -96,7 +101,7 @@ def draw(canvas):
             rocket_frame = frame.read()
             animation_spaceship.extend([rocket_frame, rocket_frame])
 
-    coroutines = [blink(canvas, x, y, symbol)
+    coroutines = [blink(canvas, x, y, symbol,  random.randint(0, 3))
                   for x, y, symbol in generate_stars(height, width)]
     coroutines.append(fire(canvas, height/2, width/2))
     coroutines.append(
@@ -114,9 +119,9 @@ def draw(canvas):
         for coroutine in coroutines.copy():
             try:
                 coroutine.send(None)
-                canvas.refresh()
             except StopIteration:
                 coroutines.remove(coroutine)
+        canvas.refresh()
         time.sleep(TIC_TIMEOUT)
 
 
@@ -124,7 +129,7 @@ def generate_stars(height: int, width: int, count_stars=100):
     for star in range(count_stars):
         x_cordinates = random.randint(0, height-1)
         y_cordinates = random.randint(0, width-1)
-        symbol = random.choice(["+", "*", ".", ":"])
+        symbol = random.choice("+*.:")
         yield x_cordinates, y_cordinates, symbol
 
 
