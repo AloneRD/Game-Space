@@ -3,6 +3,7 @@ import asyncio
 import time
 import logging
 import random
+import os
 
 from itertools import cycle
 
@@ -13,7 +14,7 @@ logging.basicConfig(filename="sample.log", level=logging.INFO)
 TIC_TIMEOUT = 0.1
 
 
-async def count_delay(seconds):
+async def sleep_task(seconds):
     for _ in range(int(seconds * 10)):
         await asyncio.sleep(0)
 
@@ -21,16 +22,16 @@ async def count_delay(seconds):
 async def blink(canvas, row, column, symbol='*'):
     while True:
         canvas.addstr(row, column, symbol, curses.A_DIM)
-        await count_delay(2)
+        await sleep_task(2)
 
         canvas.addstr(row, column, symbol)
-        await count_delay(0.3)
+        await sleep_task(0.3)
 
         canvas.addstr(row, column, symbol, curses.A_BOLD)
-        await count_delay(0.5)
+        await sleep_task(0.5)
 
         canvas.addstr(row, column, symbol)
-        await count_delay(0.3)
+        await sleep_task(0.3)
 
 
 async def fire(canvas, start_row, start_column, rows_speed=-0.6, columns_speed=0):
@@ -78,7 +79,7 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
             column += columns_direction
 
         draw_frame(canvas, row, column, frame)
-        await count_delay(0.3)
+        await sleep_task(0.1)
         draw_frame(canvas, row, column, frame, negative=True)
 
 
@@ -88,9 +89,12 @@ def draw(canvas):
 
     height, width = canvas.getmaxyx()
 
-    with open('animations\\rocket_frame_1.txt', 'r') as frame_1,\
-         open('animations\\rocket_frame_2.txt', 'r') as frame_2:
-        animation_spaceship = [frame_1.read(), frame_2.read()]
+    frames_animations = os.listdir('animations')
+    animation_spaceship = []
+    for frame_animation in frames_animations:
+        with open(os.path.join('animations', frame_animation), 'r') as frame:
+            rocket_frame = frame.read()
+            animation_spaceship.extend([rocket_frame, rocket_frame])
 
     coroutines = [blink(canvas, x, y, symbol)
                   for x, y, symbol in generate_stars(height, width)]
