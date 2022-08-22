@@ -9,8 +9,6 @@ from itertools import cycle
 
 from curses_tools import draw_frame, read_controls, get_frame_size
 
-logging.basicConfig(filename="sample.log", level=logging.INFO)
-
 TIC_TIMEOUT = 0.1
 
 
@@ -134,5 +132,7 @@ def generate_stars(height: int, width: int, count_stars=100):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename="sample.log", level=logging.INFO)
+
     curses.update_lines_cols()
     curses.wrapper(draw)
