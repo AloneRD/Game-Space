@@ -12,7 +12,7 @@ from curses_tools import draw_frame, read_controls, get_frame_size
 TIC_TIMEOUT = 0.1
 
 
-async def sleep_task(seconds):
+async def pause_task(seconds):
     for _ in range(int(seconds * 10)):
         await asyncio.sleep(0)
 
@@ -21,19 +21,19 @@ async def blink(canvas, row, column, symbol, flash_offset):
     while True:
         if flash_offset == 0:
             canvas.addstr(row, column, symbol, curses.A_DIM)
-            await sleep_task(2)
+            await pause_task(2)
             flash_offset += 1
         if flash_offset == 1:
             canvas.addstr(row, column, symbol)
-            await sleep_task(0.3)
+            await pause_task(0.3)
             flash_offset += 1
         if flash_offset == 2:
             canvas.addstr(row, column, symbol, curses.A_BOLD)
-            await sleep_task(0.5)
+            await pause_task(0.5)
             flash_offset += 1
         if flash_offset == 3:
             canvas.addstr(row, column, symbol)
-            await sleep_task(0.3)
+            await pause_task(0.3)
             flash_offset == 0
 
 
@@ -82,7 +82,7 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
             column += columns_direction
 
         draw_frame(canvas, row, column, frame)
-        await sleep_task(0.1)
+        await pause_task(0.1)
         draw_frame(canvas, row, column, frame, negative=True)
 
 
