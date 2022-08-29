@@ -4,6 +4,7 @@ import time
 import logging
 import random
 import os
+import glob
 
 from itertools import cycle
 
@@ -86,22 +87,47 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
         draw_frame(canvas, row, column, frame, negative=True)
 
 
+async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
+    """Animate garbage, flying from top to bottom. Сolumn position will stay same, as specified on start."""
+    rows_number, columns_number = canvas.getmaxyx()
+
+    column = max(column, 0)
+    column = min(column, columns_number - 1)
+
+    row = 0
+
+    while row < rows_number:
+        draw_frame(canvas, row, column, garbage_frame)
+        await asyncio.sleep(0)
+        draw_frame(canvas, row, column, garbage_frame, negative=True)
+        row += speed
+
+
 def draw(canvas):
     curses.curs_set(False)
     canvas.nodelay(True)
 
     height, width = canvas.getmaxyx()
 
-    frames_animations = os.listdir('animations')
+    frames_animations_spaceship = glob.glob('animations//rocket_frame_*.txt')
+    frames_animations_garbage = glob.glob('animations//gabage_*.txt')
+    generate_garbage(frames_animations_garbage)
     animation_spaceship = []
-    for frame_animation in frames_animations:
-        with open(os.path.join('animations', frame_animation), 'r') as frame:
+    for frame_animation in frames_animations_spaceship:
+        with open(frame_animation, 'r') as frame:
             rocket_frame = frame.read()
             animation_spaceship.extend([rocket_frame, rocket_frame])
 
     coroutines = [blink(canvas, x, y, symbol,  random.randint(0, 3))
                   for x, y, symbol in generate_stars(height, width)]
     coroutines.append(fire(canvas, height/2, width/2))
+    coroutines.append(
+        fly_garbage(
+            canvas,
+            column=10,
+            garbage_frame=generate_garbage(frames_animations_garbage)
+        )
+    )
     coroutines.append(
         animate_spaceship(
             canvas,
@@ -130,6 +156,11 @@ def generate_stars(height: int, width: int, count_stars=100):
         symbol = random.choice("+*.:")
         yield x_cordinates, y_cordinates, symbol
 
+
+def generate_garbage(frames: list) -> str:
+    with open(random.choice(frames)) as frame:
+        gabage_frame = frame.read()
+        return gabage_frame
 
 if __name__ == '__main__':
     logging.basicConfig(filename="sample.log", level=logging.INFO)
