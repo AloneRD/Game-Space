@@ -10,10 +10,14 @@ git clone https://github.com/AloneRD/Game-Space.git.
 ```
 2. Для пользователей windows необходимо выполнить команду 
 
-```pip install windows-curses```
+```
+pip install windows-curses
+```
 
 3. Запустить симулятор полета 
 
-```python  game.py```
+```
+python  game.py
+```
 
 4. Наслаждаться полетом в открытом космосе
