@@ -103,15 +103,32 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
         row += speed
 
 
+async def fill_orbit_with_garbage(canvas, width):
+    while True:
+        column = random.randint(0, width)
+        speed = random.uniform(0, 1)
+        frames_animations_garbage = glob.glob('animations//gabage_*.txt')
+
+        coroutines.append(
+            fly_garbage(
+                canvas,
+                column=column,
+                garbage_frame=generate_garbage(frames_animations_garbage),
+                speed=speed
+            )
+        )
+        await sleep(3)
+
+
 def draw(canvas):
+    global coroutines
     curses.curs_set(False)
     canvas.nodelay(True)
 
     height, width = canvas.getmaxyx()
 
     frames_animations_spaceship = glob.glob('animations//rocket_frame_*.txt')
-    frames_animations_garbage = glob.glob('animations//gabage_*.txt')
-    generate_garbage(frames_animations_garbage)
+
     animation_spaceship = []
     for frame_animation in frames_animations_spaceship:
         with open(frame_animation, 'r') as frame:
@@ -121,13 +138,7 @@ def draw(canvas):
     coroutines = [blink(canvas, x, y, symbol,  random.randint(0, 3))
                   for x, y, symbol in generate_stars(height, width)]
     coroutines.append(fire(canvas, height/2, width/2))
-    coroutines.append(
-        fly_garbage(
-            canvas,
-            column=10,
-            garbage_frame=generate_garbage(frames_animations_garbage)
-        )
-    )
+
     coroutines.append(
         animate_spaceship(
             canvas,
@@ -138,6 +149,7 @@ def draw(canvas):
             column=width/2-2
             )
         )
+    coroutines.append(fill_orbit_with_garbage(canvas, width))
 
     while True:
         for coroutine in coroutines.copy():
