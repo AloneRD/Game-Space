@@ -9,6 +9,7 @@ from itertools import cycle
 from physics import update_speed
 
 from curses_tools import draw_frame, read_controls, get_frame_size
+from obstacles import Obstacle, show_obstacles
 
 TIC_TIMEOUT = 0.1
 
@@ -98,17 +99,21 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
 
 
 async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
+    global obstacles
     """Animate garbage, flying from top to bottom. Сolumn position will stay same, as specified on start."""
     rows_number, columns_number = canvas.getmaxyx()
 
+    rows_size, colums_size = get_frame_size(garbage_frame)
     column = max(column, 0)
     column = min(column, columns_number - 1)
-
     row = 0
 
     while row < rows_number:
+        obstacle = Obstacle(row, column, rows_size, colums_size)
+        obstacles.append(obstacle)
         draw_frame(canvas, row, column, garbage_frame)
         await asyncio.sleep(0)
+        obstacles.remove(obstacle)
         draw_frame(canvas, row, column, garbage_frame, negative=True)
         row += speed
 
@@ -160,6 +165,7 @@ def draw(canvas):
             )
         )
     coroutines.append(fill_orbit_with_garbage(canvas, width))
+    coroutines.append(show_obstacles(canvas, obstacles))
 
     while True:
         for coroutine in coroutines.copy():
@@ -186,6 +192,7 @@ def generate_garbage(frames: list) -> str:
 
 
 if __name__ == '__main__':
+    obstacles = []
     logging.basicConfig(filename="sample.log", level=logging.INFO)
 
     curses.update_lines_cols()
