@@ -7,6 +7,7 @@ import os
 import glob
 
 from itertools import cycle
+from physics import update_speed
 
 from curses_tools import draw_frame, read_controls, get_frame_size
 
@@ -69,18 +70,27 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.6, columns_speed=0
 
 
 async def animate_spaceship(canvas, animation_spaceship, height, width, row, column):
+    row_speed = column_speed = 0
     for frame in cycle(animation_spaceship):
         row_frame, column_frame = get_frame_size(frame)
         rows_direction, columns_direction, space_pressed = read_controls(canvas)
 
         if rows_direction == -1 and height-row < height:
-            row += rows_direction
+            row_speed, column_speed = update_speed(row_speed, column_speed, -1, 0)
+            row += rows_direction + row_speed
+           
         if rows_direction == 1 and row+row_frame < height:
-            row += rows_direction
+            row_speed, column_speed = update_speed(row_speed, column_speed, 1, 0)
+            row += rows_direction + row_speed
+            
         if columns_direction == -1 and width - column < width:
-            column += columns_direction
+            row_speed, column_speed = update_speed(row_speed, column_speed, 0, -1)
+            column += columns_direction + column_speed
+            
         if columns_direction == 1 and column_frame + column < width:
-            column += columns_direction
+            row_speed, column_speed = update_speed(row_speed, column_speed, 0, 1)
+            column += columns_direction + column_speed
+            
 
         draw_frame(canvas, row, column, frame)
         await sleep(0.1)
