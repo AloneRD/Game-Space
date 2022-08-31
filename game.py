@@ -3,7 +3,6 @@ import asyncio
 import time
 import logging
 import random
-import os
 import glob
 
 from itertools import cycle
@@ -78,23 +77,24 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
         if rows_direction == -1 and height-row < height:
             row_speed, column_speed = update_speed(row_speed, column_speed, -1, 0)
             row += rows_direction + row_speed
-           
+
         if rows_direction == 1 and row+row_frame < height:
             row_speed, column_speed = update_speed(row_speed, column_speed, 1, 0)
             row += rows_direction + row_speed
-            
+
         if columns_direction == -1 and width - column < width:
             row_speed, column_speed = update_speed(row_speed, column_speed, 0, -1)
             column += columns_direction + column_speed
-            
+
         if columns_direction == 1 and column_frame + column < width:
             row_speed, column_speed = update_speed(row_speed, column_speed, 0, 1)
             column += columns_direction + column_speed
-            
 
         draw_frame(canvas, row, column, frame)
         await sleep(0.1)
         draw_frame(canvas, row, column, frame, negative=True)
+        if space_pressed:
+            coroutines.append(fire(canvas, row, column+2))
 
 
 async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
@@ -183,6 +183,7 @@ def generate_garbage(frames: list) -> str:
     with open(random.choice(frames)) as frame:
         gabage_frame = frame.read()
         return gabage_frame
+
 
 if __name__ == '__main__':
     logging.basicConfig(filename="sample.log", level=logging.INFO)
