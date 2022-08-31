@@ -12,6 +12,8 @@ from curses_tools import draw_frame, read_controls, get_frame_size
 from obstacles import Obstacle, show_obstacles
 
 TIC_TIMEOUT = 0.1
+OBSTACLES = []
+OBSTACLES_IN_FIRE = []
 
 
 async def sleep(seconds):
@@ -39,7 +41,7 @@ async def blink(canvas, row, column, symbol, flash_offset):
             flash_offset == 0
 
 
-async def fire(canvas, start_row, start_column, rows_speed=-0.6, columns_speed=0):
+async def fire(canvas, start_row, start_column, rows_speed=-0.9, columns_speed=0):
     """Display animation of gun shot, direction and speed can be specified."""
 
     row, column = start_row, start_column
@@ -62,9 +64,11 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.6, columns_speed=0
     curses.beep()
 
     while 0 < row < max_row and 0 < column < max_column:
-        for obstacle in obstacles:
+        for obstacle in OBSTACLES:
             if obstacle.has_collision(row, column):
+                OBSTACLES_IN_FIRE.append(obstacle)
                 return
+
         canvas.addstr(round(row), round(column), symbol)
         await asyncio.sleep(0)
         canvas.addstr(round(row), round(column), ' ')
@@ -79,19 +83,39 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
         rows_direction, columns_direction, space_pressed = read_controls(canvas)
 
         if rows_direction == -1 and height-row < height:
-            row_speed, column_speed = update_speed(row_speed, column_speed, -1, 0)
+            row_speed, column_speed = update_speed(
+                row_speed,
+                column_speed,
+                -1,
+                0
+                )
             row += rows_direction + row_speed
 
         if rows_direction == 1 and row+row_frame < height:
-            row_speed, column_speed = update_speed(row_speed, column_speed, 1, 0)
+            row_speed, column_speed = update_speed(
+                row_speed,
+                column_speed,
+                1,
+                0
+                )
             row += rows_direction + row_speed
 
         if columns_direction == -1 and width - column < width:
-            row_speed, column_speed = update_speed(row_speed, column_speed, 0, -1)
+            row_speed, column_speed = update_speed(
+                row_speed,
+                column_speed,
+                0,
+                -1
+                )
             column += columns_direction + column_speed
 
         if columns_direction == 1 and column_frame + column < width:
-            row_speed, column_speed = update_speed(row_speed, column_speed, 0, 1)
+            row_speed, column_speed = update_speed(
+                row_speed,
+                column_speed,
+                0,
+                1
+                )
             column += columns_direction + column_speed
 
         draw_frame(canvas, row, column, frame)
@@ -102,7 +126,7 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
 
 
 async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
-    global obstacles
+    global OBSTACLES
     """Animate garbage, flying from top to bottom. Сolumn position will stay same, as specified on start."""
     rows_number, columns_number = canvas.getmaxyx()
 
@@ -110,15 +134,20 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
     column = max(column, 0)
     column = min(column, columns_number - 1)
     row = 0
-
+    obstacle = Obstacle(row, column, rows_size, colums_size)
+    OBSTACLES.append(obstacle)
     while row < rows_number:
-        obstacle = Obstacle(row, column, rows_size, colums_size)
-        obstacles.append(obstacle)
         draw_frame(canvas, row, column, garbage_frame)
         await asyncio.sleep(0)
-        obstacles.remove(obstacle)
         draw_frame(canvas, row, column, garbage_frame, negative=True)
         row += speed
+        obstacle.row += speed
+
+        if obstacle in OBSTACLES_IN_FIRE:
+            OBSTACLES.remove(obstacle)
+            OBSTACLES_IN_FIRE.remove(obstacle)
+            return
+    OBSTACLES.remove(obstacle)
 
 
 async def fill_orbit_with_garbage(canvas, width):
@@ -168,6 +197,7 @@ def draw(canvas):
             )
         )
     coroutines.append(fill_orbit_with_garbage(canvas, width))
+    coroutines.append(show_obstacles(canvas, OBSTACLES))
 
     while True:
         for coroutine in coroutines.copy():
@@ -196,6 +226,8 @@ def generate_garbage(frames: list) -> str:
 if __name__ == '__main__':
     obstacles = []
     logging.basicConfig(filename="sample.log", level=logging.INFO)
-
-    curses.update_lines_cols()
-    curses.wrapper(draw)
+    try:
+        curses.update_lines_cols()
+        curses.wrapper(draw)
+    except Exception as e:
+        logging.info(e)
