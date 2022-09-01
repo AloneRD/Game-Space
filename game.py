@@ -123,6 +123,9 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
         draw_frame(canvas, row, column, frame, negative=True)
         if space_pressed:
             coroutines.append(fire(canvas, row, column+2))
+        for obstacle in OBSTACLES:
+            if obstacle.has_collision(row, column):
+                await show_gameover(canvas)
 
 
 async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
@@ -166,6 +169,15 @@ async def fill_orbit_with_garbage(canvas, width):
             )
         )
         await sleep(3)
+
+
+async def show_gameover(canvas):
+    height, width = canvas.getmaxyx()
+    with open('animations//game_over.txt', 'r') as frame:
+        game_over_frame = frame.read()
+    while True:
+        draw_frame(canvas, height//4, width//4, game_over_frame)
+        await asyncio.sleep(0)
 
 
 def draw(canvas):
