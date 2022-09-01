@@ -182,8 +182,8 @@ async def fill_orbit_with_garbage(canvas, width):
         frames_animations_garbage = glob.glob('animations//gabage_*.txt')
 
         await asyncio.sleep(0)
-        garbage_regulator = get_garbage_delay_tics(YEAR)
-        if garbage_regulator is None:
+        garbage_delay_tics = get_garbage_delay_tics(YEAR)
+        if garbage_delay_tics is None:
             continue
         coroutines.append(
             fly_garbage(
@@ -193,7 +193,7 @@ async def fill_orbit_with_garbage(canvas, width):
                 speed=speed
             )
         )
-        await sleep(garbage_regulator)
+        await sleep(garbage_delay_tics)
 
 
 async def show_gameover(canvas):
