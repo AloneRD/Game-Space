@@ -7,7 +7,7 @@ import glob
 
 from itertools import cycle
 from physics import update_speed
-
+from explosion import explode
 from curses_tools import draw_frame, read_controls, get_frame_size
 from obstacles import Obstacle, show_obstacles
 
@@ -77,7 +77,7 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.9, columns_speed=0
 
 
 async def animate_spaceship(canvas, animation_spaceship, height, width, row, column):
-    row_speed = column_speed = 0
+    row_speed = column_speed = 3
     for frame in cycle(animation_spaceship):
         row_frame, column_frame = get_frame_size(frame)
         rows_direction, columns_direction, space_pressed = read_controls(canvas)
@@ -145,6 +145,7 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
 
         if obstacle in OBSTACLES_IN_FIRE:
             OBSTACLES.remove(obstacle)
+            await explode(canvas, row+3, column+3)
             OBSTACLES_IN_FIRE.remove(obstacle)
             return
     OBSTACLES.remove(obstacle)
