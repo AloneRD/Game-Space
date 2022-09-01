@@ -9,11 +9,13 @@ from itertools import cycle
 from physics import update_speed
 from explosion import explode
 from curses_tools import draw_frame, read_controls, get_frame_size
-from obstacles import Obstacle, show_obstacles
+from obstacles import Obstacle
+from game_scenario import get_garbage_delay_tics, PHRASES
 
 TIC_TIMEOUT = 0.1
 OBSTACLES = []
 OBSTACLES_IN_FIRE = []
+YEAR = 1956
 
 
 async def sleep(seconds):
@@ -121,15 +123,34 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
         draw_frame(canvas, row, column, frame)
         await sleep(0.1)
         draw_frame(canvas, row, column, frame, negative=True)
-        if space_pressed:
+
+        if space_pressed and YEAR >= 2020:
             coroutines.append(fire(canvas, row, column+2))
         for obstacle in OBSTACLES:
             if obstacle.has_collision(row, column):
                 await show_gameover(canvas)
 
 
+async def count_years():
+    global YEAR
+    while True:
+        YEAR += 1
+
+        await sleep(1.5)
+
+
+async def draw_year(canvas, row, colum):
+    while True:
+        try:
+            draw_frame(canvas, row, colum, f'{YEAR} - {PHRASES[YEAR]}')
+        except KeyError:
+            draw_frame(canvas, row, colum, f'{YEAR}'+('#'*100), negative=True)
+            draw_frame(canvas, row, colum, f'{YEAR}')
+        await asyncio.sleep(0)
+
+
 async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
-    global OBSTACLES
+    global OBSTACLES, YEAR
     """Animate garbage, flying from top to bottom. Сolumn position will stay same, as specified on start."""
     rows_number, columns_number = canvas.getmaxyx()
 
@@ -160,6 +181,10 @@ async def fill_orbit_with_garbage(canvas, width):
         speed = random.uniform(0, 1)
         frames_animations_garbage = glob.glob('animations//gabage_*.txt')
 
+        await asyncio.sleep(0)
+        garbage_regulator = get_garbage_delay_tics(YEAR)
+        if garbage_regulator is None:
+            continue
         coroutines.append(
             fly_garbage(
                 canvas,
@@ -168,7 +193,7 @@ async def fill_orbit_with_garbage(canvas, width):
                 speed=speed
             )
         )
-        await sleep(3)
+        await sleep(garbage_regulator)
 
 
 async def show_gameover(canvas):
@@ -197,7 +222,6 @@ def draw(canvas):
 
     coroutines = [blink(canvas, x, y, symbol,  random.randint(0, 3))
                   for x, y, symbol in generate_stars(height, width)]
-    coroutines.append(fire(canvas, height/2, width/2))
 
     coroutines.append(
         animate_spaceship(
@@ -210,7 +234,8 @@ def draw(canvas):
             )
         )
     coroutines.append(fill_orbit_with_garbage(canvas, width))
-    coroutines.append(show_obstacles(canvas, OBSTACLES))
+    coroutines.append(count_years())
+    coroutines.append(draw_year(canvas, 2, 2))
 
     while True:
         for coroutine in coroutines.copy():
