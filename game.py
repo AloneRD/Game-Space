@@ -79,46 +79,29 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.9, columns_speed=0
 
 
 async def animate_spaceship(canvas, animation_spaceship, height, width, row, column):
-    row_speed = column_speed = 3
+    row_speed = column_speed = 0
     for frame in cycle(animation_spaceship):
-        row_frame, column_frame = get_frame_size(frame)
+        frame_height, frame_width = get_frame_size(frame)
+
         rows_direction, columns_direction, space_pressed = read_controls(canvas)
 
-        if rows_direction == -1 and height-row < height:
-            row_speed, column_speed = update_speed(
-                row_speed,
-                column_speed,
-                -1,
-                0
-                )
-            row += rows_direction + row_speed
+        row_speed, column_speed = update_speed(
+            row_speed,
+            column_speed,
+            rows_direction,
+            columns_direction,
+        )
+        row_number = min(
+            row + row_speed,
+            height - frame_height - 1,
+        )
+        column_number = min(
+            column + column_speed,
+            width - frame_width - 1,
+        )
 
-        if rows_direction == 1 and row+row_frame < height:
-            row_speed, column_speed = update_speed(
-                row_speed,
-                column_speed,
-                1,
-                0
-                )
-            row += rows_direction + row_speed
-
-        if columns_direction == -1 and width - column < width:
-            row_speed, column_speed = update_speed(
-                row_speed,
-                column_speed,
-                0,
-                -1
-                )
-            column += columns_direction + column_speed
-
-        if columns_direction == 1 and column_frame + column < width:
-            row_speed, column_speed = update_speed(
-                row_speed,
-                column_speed,
-                0,
-                1
-                )
-            column += columns_direction + column_speed
+        row = max(row_number, 1)
+        column = max(column_number, 1)
 
         draw_frame(canvas, row, column, frame)
         await sleep(0.1)
