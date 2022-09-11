@@ -252,7 +252,6 @@ def get_garbage_frames() -> list:
 
 
 if __name__ == '__main__':
-    obstacles = []
     logging.basicConfig(filename="sample.log", level=logging.INFO)
     try:
         curses.update_lines_cols()
