@@ -78,7 +78,7 @@ async def fire(canvas, start_row, start_column, rows_speed=-0.9, columns_speed=0
         column += columns_speed
 
 
-async def animate_spaceship(canvas, animation_spaceship, height, width, row, column):
+async def animate_spaceship(canvas, animation_spaceship, frame_game_over, height, width, row, column):
     row_speed = column_speed = 0
     for frame in cycle(animation_spaceship):
         frame_height, frame_width = get_frame_size(frame)
@@ -111,7 +111,7 @@ async def animate_spaceship(canvas, animation_spaceship, height, width, row, col
             coroutines.append(fire(canvas, row, column+2))
         for obstacle in OBSTACLES:
             if obstacle.has_collision(row, column):
-                await show_gameover(canvas)
+                await show_gameover(canvas, frame_game_over)
 
 
 async def count_years():
@@ -158,11 +158,10 @@ async def fly_garbage(canvas, column, garbage_frame, speed=0.5):
     OBSTACLES.remove(obstacle)
 
 
-async def fill_orbit_with_garbage(canvas, width):
+async def fill_orbit_with_garbage(canvas, width, frames_gabages):
     while True:
         column = random.randint(0, width)
         speed = random.uniform(0, 1)
-        frames_animations_garbage = glob.glob('animations//gabage_*.txt')
 
         await asyncio.sleep(0)
         garbage_delay_tics = get_garbage_delay_tics(YEAR)
@@ -172,17 +171,15 @@ async def fill_orbit_with_garbage(canvas, width):
             fly_garbage(
                 canvas,
                 column=column,
-                garbage_frame=generate_garbage(frames_animations_garbage),
+                garbage_frame=random.choice(frames_gabages),
                 speed=speed
             )
         )
         await sleep(garbage_delay_tics)
 
 
-async def show_gameover(canvas):
+async def show_gameover(canvas, game_over_frame):
     height, width = canvas.getmaxyx()
-    with open('animations//game_over.txt', 'r') as frame:
-        game_over_frame = frame.read()
     while True:
         draw_frame(canvas, height//4, width//4, game_over_frame)
         await asyncio.sleep(0)
@@ -196,6 +193,10 @@ def draw(canvas):
     height, width = canvas.getmaxyx()
 
     frames_animations_spaceship = glob.glob('animations//rocket_frame_*.txt')
+    frames_gabages = get_garbage_frame()
+
+    with open('animations//game_over.txt', 'r') as frame:
+        frame_game_over = frame.read()
 
     animation_spaceship = []
     for frame_animation in frames_animations_spaceship:
@@ -210,13 +211,14 @@ def draw(canvas):
         animate_spaceship(
             canvas,
             animation_spaceship,
+            frame_game_over,
             height,
             width,
             row=height/2,
             column=width/2-2
             )
         )
-    coroutines.append(fill_orbit_with_garbage(canvas, width))
+    coroutines.append(fill_orbit_with_garbage(canvas, width, frames_gabages))
     coroutines.append(count_years())
     coroutines.append(draw_year(canvas, 2, 2))
 
@@ -238,10 +240,15 @@ def generate_stars(height: int, width: int, count_stars=100):
         yield x_cordinates, y_cordinates, symbol
 
 
-def generate_garbage(frames: list) -> str:
-    with open(random.choice(frames)) as frame:
-        gabage_frame = frame.read()
-        return gabage_frame
+def get_garbage_frame() -> list:
+    garbages_frames = []
+    garbages_frames_paths = glob.glob('animations//gabage_*.txt')
+    for garbage_frame_path in garbages_frames_paths:
+        with open(garbage_frame_path) as garbage_frame_file:
+            garbage_frame = garbage_frame_file.read()
+            garbages_frames.append(garbage_frame)
+
+    return garbages_frames
 
 
 if __name__ == '__main__':
