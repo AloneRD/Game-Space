@@ -165,7 +165,7 @@ async def fill_orbit_with_garbage(canvas, width, frames_gabages):
 
         await asyncio.sleep(0)
         garbage_delay_tics = get_garbage_delay_tics(YEAR)
-        if garbage_delay_tics is None:
+        if not garbage_delay_tics:
             continue
         coroutines.append(
             fly_garbage(
@@ -193,7 +193,7 @@ def draw(canvas):
     height, width = canvas.getmaxyx()
 
     frames_animations_spaceship = glob.glob('animations//rocket_frame_*.txt')
-    frames_gabages = get_garbage_frame()
+    frames_gabages = get_garbage_frames()
 
     with open('animations//game_over.txt', 'r') as frame:
         frame_game_over = frame.read()
@@ -240,7 +240,7 @@ def generate_stars(height: int, width: int, count_stars=100):
         yield x_cordinates, y_cordinates, symbol
 
 
-def get_garbage_frame() -> list:
+def get_garbage_frames() -> list:
     garbages_frames = []
     garbages_frames_paths = glob.glob('animations//gabage_*.txt')
     for garbage_frame_path in garbages_frames_paths:
